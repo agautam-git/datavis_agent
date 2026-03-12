@@ -1,0 +1,13 @@
+annotated-types==0.7.0
+narwhals==2.18.0
+numpy==2.4.3
+packaging==26.0
+pandas==3.0.1
+plotly==6.6.0
+pydantic==2.12.5
+pydantic_core==2.41.5
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.2
+six==1.17.0
+typing-inspection==0.4.2
+typing_extensions==4.15.0
