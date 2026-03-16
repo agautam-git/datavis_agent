@@ -20,6 +20,7 @@ dependencies = [
     "matplotlib",
     "fastapi",
     "uvicorn",
+    "mcp",
 ]
 
 [project.optional-dependencies]

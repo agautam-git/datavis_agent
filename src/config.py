@@ -34,3 +34,7 @@ MODEL_COSTS = {
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 DATA_DIR = os.path.join(BASE_DIR, "data")
+
+# ──  MCP  ─────────────────────────────────────────────────────────
+MCP_SERVER_PATH = os.path.join(BASE_DIR, "src", "mcp_server", "server.py")
+
