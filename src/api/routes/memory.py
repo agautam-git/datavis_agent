@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from api.schemas import MemoryStatsResponse
-from api.dependencies import get_memory, get_db
+from api.dependencies import get_memory
 from memory.memory import MemoryManager
 from db.database import Database
 from agent.prompts import SYSTEM_PROMPT
