@@ -4,20 +4,19 @@ from observability.logger import logger
 
 
 def setup_langfuse() -> Langfuse:
-    """
-    Configure and verify Langfuse connection.
-    Returns configured client.
-    """
     client = Langfuse(
         public_key=LANGFUSE_PUBLIC_KEY,
         secret_key=LANGFUSE_SECRET_KEY,
-        host=LANGFUSE_HOST,
+        host=LANGFUSE_HOST
     )
 
-    if client.auth_check():
-        logger.info("langfuse connected")
-    else:
-        logger.warning("langfuse auth failed — traces will not be sent")
+    try:
+        if client.auth_check():
+            logger.info("langfuse connected")
+        else:
+            logger.warning("langfuse auth failed — traces disabled")
+    except Exception as e:
+        logger.warning(f"langfuse unavailable: {e}")
 
     return client
 
