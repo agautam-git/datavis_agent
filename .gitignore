@@ -23,3 +23,6 @@ notebooks/logs/
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
+
+# DS Store
+.DS_Store
