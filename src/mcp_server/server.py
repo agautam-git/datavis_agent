@@ -4,7 +4,6 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp import types
 from config import DB_PATH
-from observability.logger import logger
 import sys
 from loguru import logger
 
@@ -13,7 +12,6 @@ conn   = None
 
 # remove default handler
 logger.remove()
-
 # log to stderr only — stdout is reserved for MCP protocol
 logger.add(
     sys.stderr,
