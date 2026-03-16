@@ -1,6 +1,28 @@
-.venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+.venv/
+dist/
+build/
+
+# Environment
 .env
-.ipynb_checkpoints
+
+# Data
+data/
+
+# Logs
+logs/
+notebooks/logs/
+
+# IDE
+.idea/
+.vscode/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# DS Store
 .DS_Store

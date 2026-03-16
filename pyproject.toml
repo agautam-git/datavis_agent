@@ -1,0 +1,61 @@
+[project]
+name = "datavis-agent"
+version = "0.1.0"
+description = "AI data agent with privacy-first architecture"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    "duckdb",
+    "openai",
+    "pydantic",
+    "loguru",
+    "langfuse==2.60.3",
+    "tiktoken",
+    "plotly",
+    "pandas",
+    "python-dotenv",
+    "spacy",
+    "matplotlib",
+    "fastapi",
+    "uvicorn",
+]
+
+[project.optional-dependencies]
+dev = [
+    "jupyter",
+    "ipykernel",
+    "pytest",
+    "pytest-asyncio",
+    "ruff", # Added for 2026 industry-standard linting/formatting
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# ── Metadata Location Fix ──────────────────────────────────────
+# This moves the egg-info from src/ to the project root
+[tool.distutils.egg_info]
+egg-base = "."
+
+# ── 2026 Developer Experience (DX) Additions ───────────────────
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+fix = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths  = ["tests"]
+
+[project.scripts]
+datavis-agent = "main:main"
