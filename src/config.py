@@ -18,8 +18,14 @@ MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 MAX_TURNS = int(os.getenv("MAX_TURNS", 6))
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 6000))
 
+# ── Paths ─────────────────────────────────────────────────────────
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOGS_DIR = os.path.join(BASE_DIR, "logs")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
 # ── Database ──────────────────────────────────────────────────────
-DB_PATH = os.getenv("DB_PATH", "data/database.duckdb")
+# DB_PATH = os.path.join(BASE_DIR, os.getenv("DB_PATH"))
+DB_PATH = os.getenv("DB_PATH", "/app/data/AdventureWorks.duckdb")
 
 # ── Model costs (per 1M tokens in USD) ───────────────────────────
 MODEL_COSTS = {
@@ -29,11 +35,6 @@ MODEL_COSTS = {
     "gpt-5-mini": {"input": 0.25, "output": 2.00},
     "gpt-5.4": {"input": 2.50, "output": 15.00},
 }
-
-# ── Paths ─────────────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOGS_DIR = os.path.join(BASE_DIR, "logs")
-DATA_DIR = os.path.join(BASE_DIR, "data")
 
 # ──  MCP  ─────────────────────────────────────────────────────────
 MCP_SERVER_PATH = os.path.join(BASE_DIR, "src", "mcp_server", "server.py")

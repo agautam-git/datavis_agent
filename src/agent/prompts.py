@@ -24,6 +24,9 @@ plotly_code rules:
 - create figure called fig
 - do NOT call fig.show()
 - use double quotes only — never single quotes
+- never use escaped quotes
+- keep code simple — no multiline strings
+- no template parameter
 """
 
 SUMMARY_PROMPT = """Summarise this conversation. 
