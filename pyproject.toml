@@ -18,6 +18,8 @@ dependencies = [
     "python-dotenv",
     "spacy",
     "matplotlib",
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.optional-dependencies]
