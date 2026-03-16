@@ -1,15 +1,19 @@
 import pandas as pd
-from models.schemas import RunSqlInput
-from db.database import Database
+from io import StringIO
+from mcp_server.client import MCPClient
 from memory.memory import MemoryManager
+from models.schemas import RunSqlInput
 from observability.logger import logger
 
 
-def execute_tool(
-    tool_name: str, tool_args: dict, db: Database, memory: MemoryManager
+async def execute_tool(
+    tool_name: str,
+    tool_args: dict,
+    memory:    MemoryManager,
+    mcp:       MCPClient
 ) -> tuple[str, pd.DataFrame | None]:
     """
-    Executes a tool call.
+    Executes tool via MCP client.
     Returns (result_string, dataframe_or_none)
     """
 
@@ -18,26 +22,31 @@ def execute_tool(
         if cached:
             logger.info("  list_tables: from cache")
             return cached, None
-        tables = db.get_tables()
-        result = str(tables)
+        result = await mcp.call_tool("list_tables")
         memory.cache_tables(result)
         return result, None
 
     elif tool_name == "get_schema":
-        table = tool_args.get("table_name")
+        table  = tool_args.get("table_name")
         cached = memory.get_cached_schema(table)
         if cached:
             logger.info(f"  get_schema({table}): from cache")
             return cached, None
-        result = db.get_schema(table)
+        result = await mcp.call_tool("get_schema", {"table_name": table})
         memory.cache_schema(table, result)
         return result, None
 
     elif tool_name == "run_sql":
         try:
             validated = RunSqlInput(**tool_args)
-            df = db.execute(validated.sql)
-            return df.to_string(index=False), df
+            result    = await mcp.call_tool("run_sql", {"sql": validated.sql})
+            if result.startswith("SQL_ERROR"):
+                return result, None
+            try:
+                df = pd.read_csv(StringIO(result), sep=r"\s{2,}", engine="python")
+                return result, df
+            except Exception:
+                return result, None
         except Exception as e:
             return f"SQL_ERROR: {str(e)}", None
 
