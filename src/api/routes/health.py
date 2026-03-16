@@ -7,7 +7,6 @@ from config import MCP_SERVER_PATH
 
 router = APIRouter()
 
-
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
     try:
