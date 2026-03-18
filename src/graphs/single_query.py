@@ -17,9 +17,12 @@ def should_retry(state: AgentState) -> str:
     failed = state.get("failed_component", "sql")
     logger.info(f"[Graph] rejected — failed: {failed} | retry: {state['retry_count']}")
 
-    if failed == "chart":    return "chart_agent"
-    elif failed == "answer": return "answer"
-    else:                    return "sql_agent"
+    if failed == "chart":
+        return "chart_agent"
+    elif failed == "answer":
+        return "answer"
+    else:
+        return "sql_agent"
 
 
 def build_single_query_graph():
