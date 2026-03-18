@@ -22,7 +22,7 @@ dependencies = [
     "uvicorn",
     "mcp",
     "langgraph",
-    "langchain"
+    "langchain",
     "redis"
 ]
 
