@@ -1,57 +1,45 @@
 import json
 from openai import OpenAI
 from graphs.state import AgentState
-from config import FINAL_MODEL, OPENAI_API_KEY
+from config import CHART_MODEL, OPENAI_API_KEY
 from observability.logger import logger
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
-def chart_agent_node(state: AgentState) -> AgentState:
-    """
-    Reads df_columns and sql_result from state.
-    Generates appropriate plotly code.
-    """
+async def chart_agent_node(state: AgentState) -> AgentState:
     logger.info("[Chart Agent] generating chart...")
 
-    df_columns = state["df_columns"]
-    sql_result = state["sql_result"]
-    question   = state["question"]
-
-    if not df_columns or not sql_result:
+    if not state["df_columns"] or not state["sql_result"]:
         logger.info("[Chart Agent] no data — skipping")
         return {**state, "chart_type": "none", "plotly_code": ""}
 
     response = client.chat.completions.create(
-        model    = FINAL_MODEL,
+        model    = CHART_MODEL,
         messages = [
             {
                 "role": "system",
                 "content": """You are a data visualisation expert.
-Given data and a question decide the best chart and write plotly code.
-
+Return JSON only — no markdown:
+{
+  "chart_type": "bar|line|pie|scatter|histogram|table|none",
+  "plotly_code": "import plotly.express as px\nfig = px.bar(...)"
+}
 Rules:
 - df is already loaded as pandas DataFrame
 - create figure called fig
 - do NOT call fig.show()
 - use double quotes only — never single quotes
-- never use escaped quotes
-- no template parameter
-- use only the exact columns provided
-- choose: bar, line, pie, scatter, histogram, table, none
-
-Return JSON only — no markdown:
-{
-  "chart_type": "bar",
-  "plotly_code": "import plotly.express as px\nfig = px.bar(...)"
-}"""
+- no escaped quotes, no template parameter
+- use ONLY the exact column names provided
+- for single value results use chart_type none"""
             },
             {
                 "role": "user",
-                "content": f"""Question: {question}
-DataFrame columns: {df_columns}
+                "content": f"""Question: {state['question']}
+DataFrame columns: {state['df_columns']}
 Data sample:
-{sql_result[:500]}"""
+{state['sql_result'][:500]}"""
             }
         ]
     )
@@ -65,11 +53,6 @@ Data sample:
         logger.info(f"[Chart Agent] chart_type: {chart_type}")
     except Exception as e:
         logger.warning(f"[Chart Agent] parse error: {e}")
-        chart_type  = "none"
-        plotly_code = ""
+        chart_type, plotly_code = "none", ""
 
-    return {
-        **state,
-        "chart_type":  chart_type,
-        "plotly_code": plotly_code
-    }
+    return {**state, "chart_type": chart_type, "plotly_code": plotly_code}

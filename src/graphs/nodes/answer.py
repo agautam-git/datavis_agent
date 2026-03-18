@@ -7,66 +7,71 @@ from observability.logger import logger
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
-def answer_node(state: AgentState) -> AgentState:
-    """
-    Generates final structured answer from approved SQL results.
-    Stores result in report_sections for report accumulation.
-    """
+async def answer_node(state: AgentState) -> AgentState:
     logger.info("[Answer] generating final answer...")
 
-    df_columns = state["df_columns"]
     df_context = (
-        f"DataFrame columns: {df_columns}. Use only these in plotly_code."
-        if df_columns
-        else "No data available. Set chart_type to none."
+        f"DataFrame columns: {state['df_columns']}. Use only these in plotly_code."
+        if state["df_columns"]
+        else "No data available. Set plotly_code to empty string."
     )
 
-    final = client.beta.chat.completions.parse(
-        model    = FINAL_MODEL,
-        messages = [
-            {
-                "role": "system",
-                "content": """You are a data analyst.
-Give a clear concise answer based on the data.
+    chart_instruction = (
+        f"Chart type already decided: {state['chart_type']}. "
+        f"Write plotly_code for this chart type only."
+        if state["chart_type"] != "none"
+        else "No chart needed. Set plotly_code to empty string."
+    )
+
+    messages = [
+        {
+            "role": "system",
+            "content": """You are a data analyst.
+Give a clear concise answer based on the data provided.
 For plotly_code:
 - df is already loaded as pandas DataFrame
 - create figure called fig
 - do NOT call fig.show()
 - use double quotes only
-- never use escaped quotes
+- no escaped quotes
 - no template parameter"""
-            },
-            *state["messages"],
-            {
-                "role": "user",
-                "content": f"{df_context} Give your final structured answer."
-            }
-        ],
+        },
+        {
+            "role": "user",
+            "content": f"""Question: {state['question']}
+SQL used: {state['sql_used']}
+Data: {state['sql_result'][:1000]}
+{df_context}
+{chart_instruction}
+Give your final structured answer."""
+        }
+    ]
+
+    final = client.beta.chat.completions.parse(
+        model           = FINAL_MODEL,
+        messages        = messages,
         response_format = AgentAnswer
     )
 
     result = final.choices[0].message.parsed
-
     logger.info(f"[Answer] answer: {result.answer[:100]}...")
-    logger.info(f"[Answer] chart:  {result.chart_type}")
+    logger.info(f"[Answer] chart:  {state['chart_type']}")
 
-    # ── Accumulate for report ─────────────────────────────────────
     section = {
-        "question":   state["question"],
-        "answer":     result.answer,
-        "sql_used":   result.sql_used,
-        "chart_type": result.chart_type,
-        "plotly_code":result.plotly_code,
-        "dataframe":  state["dataframe"]
+        "question":    state["question"],
+        "answer":      result.answer,
+        "sql_used":    result.sql_used,
+        "chart_type":  state["chart_type"],
+        "plotly_code": result.plotly_code,
+        "df_columns":  state["df_columns"],
+        "thread_id":   state["thread_id"]
     }
-
-    existing_sections = state.get("report_sections", [])
 
     return {
         **state,
-        "answer":           result.answer,
-        "sql_used":         result.sql_used,
-        "chart_type":       result.chart_type,
-        "plotly_code":      result.plotly_code,
-        "report_sections":  existing_sections + [section]
+        "answer":          result.answer,
+        "sql_used":        result.sql_used,
+        "chart_type":      state["chart_type"],
+        "plotly_code":     result.plotly_code,
+        "report_sections": state.get("report_sections", []) + [section]
     }

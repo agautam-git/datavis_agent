@@ -5,6 +5,7 @@ from typing import Literal
 # ── Request models ────────────────────────────────────────────────
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1, description="Question to ask the agent")
+    thread_id: str = Field(default="default", description="conversation thread ID")
 
 
 # ── Response models ───────────────────────────────────────────────

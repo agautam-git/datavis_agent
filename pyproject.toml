@@ -21,6 +21,9 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "mcp",
+    "langgraph",
+    "langchain",
+    "redis"
 ]
 
 [project.optional-dependencies]

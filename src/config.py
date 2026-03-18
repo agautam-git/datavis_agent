@@ -13,6 +13,10 @@ LANGFUSE_HOST = os.getenv("LANGFUSE_HOST")
 AGENT_MODEL = os.getenv("AGENT_MODEL", "gpt-4.1-mini")
 FINAL_MODEL = os.getenv("FINAL_MODEL", "gpt-5-mini")
 
+CRITIQUE_MODEL    = os.getenv("CRITIQUE_MODEL",   AGENT_MODEL)
+EVALUATION_MODEL  = os.getenv("EVALUATION_MODEL", AGENT_MODEL)
+CHART_MODEL       = os.getenv("CHART_MODEL",      FINAL_MODEL)
+
 # ── Agent settings ────────────────────────────────────────────────
 MAX_RETRIES = int(os.getenv("MAX_RETRIES", 3))
 MAX_TURNS = int(os.getenv("MAX_TURNS", 6))

@@ -6,14 +6,8 @@ from observability.logger import logger
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
-def planner_node(state: AgentState) -> AgentState:
-    """
-    Reads question.
-    Creates a brief data retrieval plan.
-    Sets up messages for SQL agent.
-    """
-    question = state["question"]
-    logger.info(f"[Planner] question: {question}")
+async def planner_node(state: AgentState) -> AgentState:
+    logger.info(f"[Planner] question: {state['question']}")
 
     response = client.chat.completions.create(
         model    = AGENT_MODEL,
@@ -21,13 +15,12 @@ def planner_node(state: AgentState) -> AgentState:
             {
                 "role": "system",
                 "content": """You are a data analyst planner.
-Given a question, create a brief plan for what SQL queries are needed.
-Be concise — 2-3 sentences max.
-Do not write SQL — just describe what data is needed."""
+Given a question create a brief plan for what SQL queries are needed.
+2-3 sentences max. Do NOT write SQL — just describe what data is needed."""
             },
             {
                 "role": "user",
-                "content": f"Question: {question}"
+                "content": f"Question: {state['question']}"
             }
         ]
     )
@@ -37,5 +30,7 @@ Do not write SQL — just describe what data is needed."""
 
     return {
         **state,
-        "messages": [{"role": "user", "content": f"Question: {question}\nPlan: {plan}"}]
+        "messages": [
+            {"role": "user", "content": f"Question: {state['question']}\nPlan: {plan}"}
+        ]
     }
