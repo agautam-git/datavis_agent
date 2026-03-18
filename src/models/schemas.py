@@ -11,7 +11,6 @@ class RunSqlInput(BaseModel):
 class AgentAnswer(BaseModel):
     answer: str = Field(..., description="Plain English explanation")
     sql_used: str = Field(..., description="SQL that produced the result")
-    chart_type: Literal["bar", "line", "pie", "scatter", "histogram", "none"]
     plotly_code: str = Field(..., description="Complete plotly code using df and fig")
 
 

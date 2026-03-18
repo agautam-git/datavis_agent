@@ -1,9 +1,7 @@
 import json
-import asyncio
 import pandas as pd
-from io import StringIO
 from openai import OpenAI
-from graphs.state import AgentState
+from graphs.state import AgentState, store_df
 from mcp_server.client import MCPClient
 from agent.tools import TOOLS
 from agent.prompts import SYSTEM_PROMPT
@@ -13,34 +11,26 @@ from observability.logger import logger
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 
-async def _sql_agent_async(state: AgentState) -> AgentState:
-    """
-    Async SQL agent.
-    Always starts fresh — only carries question + critique feedback.
-    Tool call history never persists across runs.
-    """
+async def sql_agent_node(state: AgentState) -> AgentState:
     logger.info("[SQL Agent] running...")
 
-    # ── Always start with clean messages ─────────────────────────
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user",   "content": state["question"]}
     ]
 
-    # ── Add critique feedback on retry ────────────────────────────
     if state.get("critique") and state.get("retry_count", 0) > 0:
         messages.append({
             "role":    "user",
-            "content": f"Previous attempt failed critique. Feedback: {state['critique']}. Please fix your approach."
+            "content": f"Previous attempt failed. Feedback: {state['critique']}. Please fix."
         })
-        logger.info(f"[SQL Agent] retry {state['retry_count']} with critique feedback")
+        logger.info(f"[SQL Agent] retry {state['retry_count']} — feedback: {state['critique'][:80]}")
+
+    last_df  = None
+    sql_used = ""
+    result   = ""
 
     async with MCPClient(MCP_SERVER_PATH) as mcp:
-
-        last_df  = None
-        sql_used = ""
-        result   = ""
-
         while True:
             response = client.chat.completions.create(
                 model    = AGENT_MODEL,
@@ -73,16 +63,16 @@ async def _sql_agent_async(state: AgentState) -> AgentState:
                     if not result.startswith("SQL_ERROR"):
                         try:
                             last_df  = pd.read_csv(
-                                StringIO(result),
+                                pd.io.common.StringIO(result),
                                 sep    = r"\s{2,}",
                                 engine = "python"
                             )
                             sql_used = sql
-                            logger.info(f"[SQL Agent] rows returned: {len(last_df)}")
+                            logger.info(f"[SQL Agent] rows: {len(last_df)}")
                         except Exception as e:
                             logger.warning(f"[SQL Agent] df parse error: {e}")
                     else:
-                        logger.error(f"[SQL Agent] SQL failed: {result}")
+                        logger.error(f"[SQL Agent] failed: {result}")
 
                 messages.append({
                     "role":         "tool",
@@ -90,21 +80,15 @@ async def _sql_agent_async(state: AgentState) -> AgentState:
                     "content":      result
                 })
 
-    # ── Store messages for answer node ────────────────────────────
+    if last_df is not None:
+        store_df(state["thread_id"], last_df)
+
+    safe_messages = [m for m in messages if isinstance(m, dict)]
+
     return {
         **state,
-        "messages":   messages,
+        "messages":   safe_messages,
         "sql_result": result if last_df is not None else "",
-        "dataframe":  last_df,
         "df_columns": [str(c) for c in last_df.columns] if last_df is not None else [],
         "sql_used":   sql_used
     }
-
-
-def sql_agent_node(state: AgentState) -> AgentState:
-    """Sync wrapper — new event loop per call."""
-    loop = asyncio.new_event_loop()
-    try:
-        return loop.run_until_complete(_sql_agent_async(state))
-    finally:
-        loop.close()
